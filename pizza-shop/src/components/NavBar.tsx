@@ -1,13 +1,13 @@
 import { AppBar, Toolbar, Typography, Button } from "@mui/material";
 
-export default function Navbar() {
+export default function Navbar({ shopName }: { shopName: string }) {
   return (
-    <AppBar position="sticky">
-      <Toolbar>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          🍕 Pizza Shop
+    <AppBar position="fixed">
+      <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Typography variant="h6" sx={{ flexGrow: 1, textAlign: 'center' }}>
+          🍕 {shopName}
         </Typography>
-        <Button color="inherit">Cart</Button>
+        <Button color="inherit">Finish</Button>
       </Toolbar>
     </AppBar>
   );
