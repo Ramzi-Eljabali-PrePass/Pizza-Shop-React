@@ -1,4 +1,3 @@
-import { Container, Grid } from "@mui/material";
 import PizzaOption, { PIZZA_OPTIONS } from "./PizzaOption";
 
 export default function PizzaGrid() {

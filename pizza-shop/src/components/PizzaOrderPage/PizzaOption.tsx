@@ -29,7 +29,7 @@ export const PIZZA_OPTIONS: PizzaOptionProps[] = [
   {
     pizzaName: "Pepperoni",
     image: pepperoniImg,
-    description: "Classic pepperoni with mozzarella cheese",
+    description: "Classic pepperoni with mozzarella cheese, and our signature sauce",
     price: 13.99
   },
   {
