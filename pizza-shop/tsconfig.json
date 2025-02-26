@@ -1,7 +1,9 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
+  "compilerOptions": {
+    "module": "ESNext",  // Use ES Modules
+    "moduleResolution": "node",  // Resolve modules like Node.js
+    "target": "ESNext",  // Use the latest JavaScript features
+    "esModuleInterop": true,  // Allow default imports for non-ES modules
+    "allowSyntheticDefaultImports": true  // Allow default imports
+  }
 }
