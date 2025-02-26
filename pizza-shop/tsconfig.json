@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "jsx": "react",
     "module": "ESNext",  // Use ES Modules
     "moduleResolution": "node",  // Resolve modules like Node.js
     "target": "ESNext",  // Use the latest JavaScript features
