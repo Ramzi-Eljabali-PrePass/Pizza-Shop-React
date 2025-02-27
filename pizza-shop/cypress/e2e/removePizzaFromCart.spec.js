@@ -1,4 +1,4 @@
-describe('Pizza Shop - Add to Cart and verify the quantity is 4', () => {
+describe('remove pizza from cart and verify checkout button is no more available', () => {
   beforeEach(() => {
     cy.visit('/');
   });
@@ -29,16 +29,19 @@ describe('Pizza Shop - Add to Cart and verify the quantity is 4', () => {
   cy.get('span.MuiBadge-badge')  // click on the cart button
     .click();
 
-  //Verify the checkout button is available and click on it 
-  cy.get('button[type="button"]')  // Target the button with type="button"
-  .contains('Checkout')
-  .should('be.visible')
-  .click();
 
-  //verify new test box opened enter your name and you are able to add your name and click on confrim order
-  cy.get('h2.MuiTypography-root')  // Selector for the <h2> element
-  .contains('Enter Your Name')  // Ensure it contains the text "Enter Your Name"
-  .should('be.visible');  // Ensure the dialog is visible on the page
+
+    pizzas.forEach(() => {
+      cy.get('button')  // Locate the button with the "Remove" text
+        .contains('Remove')  // Find the button by its text
+        .should('be.visible')  // Ensure the button is visible
+        .click();
+      });
+
+  //verify checkoyt button is not visible anymore once cart is empty
+  cy.get('button[type="button"]')  // Locate the button with type="button"
+  .contains('Checkout')  // Find the button by its text "Checkout"
+  .should('not.exist');  // Assert that the button is NOT visible
 
   });
 });
