@@ -26,10 +26,19 @@ describe('Pizza Shop - Add to Cart and verify the quantity is 4', () => {
     }
   });
    
-  cy.get('span.MuiBadge-badge')  // Select the badge element that shows the quantity
+  cy.get('span.MuiBadge-badge')  // click on the cart button
     .click();
 
-  
+  //Verify the checkout button is available and click on it 
+  cy.get('button[type="button"]')  // Target the button with type="button"
+  .contains('Checkout')
+  .should('be.visible')
+  .click();
+
+  //verify new test box opened enter your name and you are able to add your name and click on confrim order
+  cy.get('h2.MuiTypography-root')  // Selector for the <h2> element
+  .contains('Enter Your Name')  // Ensure it contains the text "Enter Your Name"
+  .should('be.visible');  // Ensure the dialog is visible on the page
 
   });
 });

@@ -1,18 +1,18 @@
-describe('Verifying the end to end test of pizza shop', () => {
+describe('Verifythe end to end test', () => {
     beforeEach(() => {
       cy.visit('/');
-      cy.contains("Jared's Pizza Shop")
+      cy.contains('Pizza Shop')
     });
   
     it('should add all four pizzas to the cart', () => {
       const pizzas = ['Vegetarian', 'Pepperoni', 'Cheese', 'Hawaiian'];
       const pizzaCount = pizzas.length;
       pizzas.forEach((pizza) => {
-        cy.contains('.MuiTypography-h5', pizza) // Find pizza name in <div class="MuiTypography-h5">
+        cy.contains('.MuiTypography-h5', pizza) 
           .should('be.visible')
-          .parents('.MuiCard-root') // Move up to the entire card container
-          .find('.MuiCardActions-root') // Locate the actions section where the button exists
-          .contains('button', 'Add to Order') // Ensure it finds the button
+          .parents('.MuiCard-root') 
+          .find('.MuiCardActions-root') 
+          .contains('button', 'Add to Order') 
           .click();
       });
   
@@ -20,12 +20,38 @@ describe('Verifying the end to end test of pizza shop', () => {
       cy.wait(3000);
       cy.get('p.MuiTypography-root')
     .each(($el) => {
-      const text = $el.text(); // Get the text content of the <p> element
-      if (text.includes('Quantity:')) { // Check if it contains "Quantity:"
-        const quantity = parseInt(text.replace('Quantity: ', '').trim(), 10); // Extract the number after "Quantity:"
-        expect(quantity).to.eq(pizzaCount); // Verify that the quantity is 1 (or change the value as needed)
+      const text = $el.text(); 
+      if (text.includes('Quantity:')) { 
+        const quantity = parseInt(text.replace('Quantity: ', '').trim(), 10); 
+        expect(quantity).to.eq(pizzaCount); 
       }
     });
+     
+    //Verify if we are able to click on the cart button
+    cy.get('span.MuiBadge-badge')  
+      .click();
+  
+    //Verify the checkout button is available and click on it 
+    cy.get('button[type="button"]')  
+    .contains('Checkout')
+    .should('be.visible')
+    .click();
+  
+    //verify new test box opened enter your name and you are able to add your name and click on confrim order
+    cy.get('h2.MuiTypography-root') 
+    .contains('Enter Your Name') 
+    .should('be.visible'); 
+    cy.get('input.MuiInputBase-input') 
+    .should('be.visible')
+    .type('Jared');
+    cy.get('button')
+      .contains('Confirm Order')  // Find the button with the text "Confirm Order"
+      .should('be.visible')  // Ensure the button is visible
+      .click();
+
+      //Verfiy clicking on confirm order takes us to new url for order -tracking
+
+      cy.url().should('eq', 'http://localhost:5173/order-tracking');
   
     });
   });
