@@ -1,3 +1,4 @@
+import React from 'react';
 import { Card, CardContent, CardActions, Typography, Button, CardMedia } from '@mui/material';
 import { CartItem as CartItemType } from './cart';
 

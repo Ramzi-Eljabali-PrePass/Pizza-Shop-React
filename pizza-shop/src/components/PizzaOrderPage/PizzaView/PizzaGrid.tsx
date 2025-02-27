@@ -1,3 +1,4 @@
+import React from 'react';
 import PizzaOption, { PIZZA_OPTIONS } from "./PizzaOption";
 
 export default function PizzaGrid() {

@@ -1,11 +1,9 @@
-import { Drawer, Box, Typography, IconButton, CardMedia, Button} from '@mui/material';
+import { Drawer, Box, Typography, IconButton, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useCart } from './CartContext';
-import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import CardContent from '@mui/material/CardContent';
 import CartItem from './CartItem';
-
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface CartDrawerProps {
   open: boolean;
@@ -13,72 +11,98 @@ interface CartDrawerProps {
 }
 
 const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
-  const { cart, removeFromCart } = useCart();
+  const { cart, removeFromCart, clearCart } = useCart();
+  const navigate = useNavigate();
+  const [openDialog, setOpenDialog] = useState(false);
+  const [customerName, setCustomerName] = useState('');
   const cartItems = Object.values(cart);
 
+  const handleCheckout = () => {
+    onClose(); // Close the drawer
+    clearCart(); // Clear the cart
+    navigate('/order-tracking', { state: { customerName } }); // Pass customer name to order tracking
+  };
+
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setCustomerName('');
+  };
+
+  const handleConfirmCheckout = () => {
+    if (customerName.trim()) {
+      handleCheckout();
+      handleCloseDialog();
+    }
+  };
+
   return (
-    <Drawer
-      anchor="right"
-      open={open}
-      onClose={onClose}
-    >
-      <Box sx={{ width: 350, p: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6">Your Cart</Typography>
-          <IconButton onClick={onClose}>
-            <CloseIcon />
-          </IconButton>
+    <>
+      <Drawer
+        anchor="right"
+        open={open}
+        onClose={onClose}
+      >
+        <Box sx={{ width: 350, p: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">Your Cart</Typography>
+            <IconButton onClick={onClose}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          
+          {cartItems.length === 0 ? (
+            <Typography>Your cart is empty</Typography>
+          ) : (
+            cartItems.map((item) => (
+              <CartItem 
+                key={item.pizzaName} 
+                item={item}
+                onRemove={() => removeFromCart(item.pizzaName)}
+              />
+            ))
+          )}
+          {cartItems.length > 0 && (
+            <Button 
+              variant="contained" 
+              color="primary" 
+              fullWidth 
+              sx={{ mt: 2 }}
+              onClick={handleOpenDialog}
+            >
+              Checkout
+            </Button>
+          )}
         </Box>
-        
-        {cartItems.length === 0 ? (
-          <Typography>Your cart is empty</Typography>
-        ) : (
-          cartItems.map((item) => (
-            <CartItem 
-              key={item.pizzaName} 
-              item={item}
-              onRemove={() => removeFromCart(item.pizzaName)}
-            />
-          ))
-        )}
-      </Box>
-    </Drawer>
+      </Drawer>
+
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Enter Your Name</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Name"
+            fullWidth
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button 
+            onClick={handleConfirmCheckout}
+            disabled={!customerName.trim()}
+          >
+            Confirm Order
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };
-
-function PizzaOption({ pizzaName, image, description, price }: PizzaOptionProps) {
-  const { addToCart } = useCart();  // Get addToCart function from context
-
-return (
-  <Card sx={{ width: 150, height: 100, m: 2 }}>
-    <CardMedia
-      component="img"
-      height="140"
-      width="140"
-      image={image}
-      alt={pizzaName}
-    />
-    <CardContent>
-      <Typography gutterBottom variant="h5" component="div">
-        {pizzaName}
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        {description}
-      </Typography>
-      <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
-        ${price.toFixed(2)}
-      </Typography>
-    </CardContent>
-    <CardActions>
-      <Button 
-        size="small" 
-        color="primary" 
-        onClick={() => addToCart(pizzaName, price, image)}>
-        Add to Order
-      </Button>
-    </CardActions>
-  </Card>
-);
-}
 
 export default CartDrawer;
