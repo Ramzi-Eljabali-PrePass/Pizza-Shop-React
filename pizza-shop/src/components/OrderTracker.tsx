@@ -178,7 +178,7 @@ const OrderTracker: React.FC = () => {
   }, [orders.length]);
 
   const getOrdersByStatus = (status: PizzaOrder['status']) => {
-    return orders.filter(order => order.status === status);
+    return orders.filter(order => order.status === status && order.timestamp > new Date(Date.now() - 1000 * 60 * 5));
   };
 
   const renderOrderCard = (order: PizzaOrder) => (
