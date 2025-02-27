@@ -1,15 +1,14 @@
-import * as React from 'react';
-import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import CardMedia from '@mui/material/CardMedia';
-import vegetarianImg from '../../assets/vegetarian.jpg';
-import pepperoniImg from '../../assets/pepperoni.jpg';
-import hawaiianImg from '../../assets/hawaiian.jpg';
-import cheeseImg from '../../assets/cheese.jpg';
+import vegetarianImg from '../../../assets/vegetarian.jpg';
+import pepperoniImg from '../../../assets/pepperoni.jpg';
+import hawaiianImg from '../../../assets/hawaiian.jpg';
+import cheeseImg from '../../../assets/cheese.jpg';
+import { useCart } from '../cart/CartContext';
 
 
 export interface PizzaOptionProps {
@@ -47,6 +46,8 @@ export const PIZZA_OPTIONS: PizzaOptionProps[] = [
 ];
 
 export default function PizzaOption({ pizzaName, image, description, price }: PizzaOptionProps) {
+    const { addToCart } = useCart();  // Get addToCart function from context
+  
   return (
     <Card sx={{ width: 345, height: 345, m: 2 }}>
       <CardMedia
@@ -67,8 +68,14 @@ export default function PizzaOption({ pizzaName, image, description, price }: Pi
         </Typography>
       </CardContent>
       <CardActions>
-        <Button size="small" color="primary">Add to Order</Button>
+        <Button 
+          size="small" 
+          color="primary" 
+          onClick={() => addToCart(pizzaName, price, image)}>
+          Add to Order
+        </Button>
       </CardActions>
     </Card>
   );
 }
+
