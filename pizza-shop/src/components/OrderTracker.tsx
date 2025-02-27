@@ -23,6 +23,7 @@ interface PizzaOrder {
   items: string[];
   status: 'received' | 'preparing' | 'baking' | 'ready';
   timestamp: Date;
+  lastUpdated?: Date;
 }
 
 const StyledColumn = styled(Paper)(({ theme }) => ({
@@ -79,6 +80,7 @@ const OrderTracker: React.FC = () => {
           items: data.items,
           status: data.status as PizzaOrder['status'],
           timestamp: (data.timestamp as Timestamp).toDate(),
+          lastUpdated: data.lastUpdated ? (data.lastUpdated as Timestamp).toDate() : undefined
         };
       });
       setOrders(ordersData);
@@ -109,22 +111,9 @@ const OrderTracker: React.FC = () => {
   };
 
   useEffect(() => {
-    const timeouts = new Map();
+    const INTERVAL = 10000; // 10 seconds
 
-    const removeReadyOrder = (orderId: string, customerName: string) => {
-      triggerConfetti();
-      setCelebration(`${customerName}'s order is complete!`);
-      
-      // Remove the order from the list
-      setOrders(currentOrders => 
-        currentOrders.filter(order => order.id !== orderId)
-      );
-    };
-
-    const moveOrder = async (orderId: string) => {
-      const order = orders.find(o => o.id === orderId);
-      if (!order) return;
-
+    const moveOrder = async (order: PizzaOrder) => {
       let newStatus = order.status;
       switch (order.status) {
         case 'received':
@@ -136,46 +125,51 @@ const OrderTracker: React.FC = () => {
         case 'baking':
           newStatus = 'ready';
           break;
+        case 'ready':
+          return; // Don't process ready orders
       }
 
-      // Update Firestore first
-      const orderRef = doc(db, 'orders', orderId);
-      await updateDoc(orderRef, {
-        status: newStatus
+      const now = new Date();
+      const orderRef = doc(db, 'orders', order.id);
+      
+      try {
+        await updateDoc(orderRef, {
+          status: newStatus,
+          lastUpdated: now
+        });
+
+        if (newStatus === 'ready') {
+          triggerConfetti();
+          setCelebration(`${order.customerName}'s order is ready!`);
+          
+          // Remove ready order after 10 seconds
+          setTimeout(async () => {
+            await updateDoc(orderRef, {
+              status: 'completed'
+            });
+          }, INTERVAL);
+        }
+      } catch (error) {
+        console.error('Error updating order:', error);
+      }
+    };
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      
+      orders.forEach(order => {
+        const timeSinceLastUpdate = order.lastUpdated 
+          ? now.getTime() - order.lastUpdated.getTime()
+          : now.getTime() - order.timestamp.getTime();
+
+        if (timeSinceLastUpdate >= INTERVAL && order.status !== 'ready') {
+          moveOrder(order);
+        }
       });
+    }, 1000); // Check every second
 
-      // Then update local state
-      setOrders(currentOrders => 
-        currentOrders.map(o => 
-          o.id === orderId ? { ...o, status: newStatus } : o
-        )
-      );
-
-      // Handle timeouts
-      if (newStatus === 'ready') {
-        timeouts.set(
-          `remove_${orderId}`,
-          setTimeout(() => removeReadyOrder(orderId, order.customerName), 10000)
-        );
-      } else {
-        const nextDelay = Math.floor(Math.random() * (15000 - 5000 + 1) + 5000);
-        timeouts.set(orderId, setTimeout(() => moveOrder(orderId), nextDelay));
-      }
-    };
-
-    // Initialize timeouts for all non-ready orders
-    orders.forEach(order => {
-      if (order.status !== 'ready') {
-        const initialDelay = 10000;
-        timeouts.set(order.id, setTimeout(() => moveOrder(order.id), initialDelay));
-      }
-    });
-
-    // Cleanup function
-    return () => {
-      timeouts.forEach(timeout => clearTimeout(timeout));
-    };
-  }, [orders.length]);
+    return () => clearInterval(interval);
+  }, [orders]);
 
   const getOrdersByStatus = (status: PizzaOrder['status']) => {
     return orders.filter(order => order.status === status);
@@ -277,4 +271,4 @@ const OrderTracker: React.FC = () => {
   );
 };
 
-export default OrderTracker; 
+export default OrderTracker;
