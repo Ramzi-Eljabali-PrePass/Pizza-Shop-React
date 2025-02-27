@@ -6,6 +6,8 @@ import NavBar from './components/NavBar';
 import { useCart } from './components/PizzaOrderPage/cart/CartContext';
 import { useState } from 'react';
 import CartDrawer from './components/PizzaOrderPage/cart/CartDrawer';
+import { Route, Routes } from 'react-router-dom';
+import OrderTracker from './components/OrderTracker';
 
 function App() {
   const { getCartItemCount } = useCart();
@@ -13,21 +15,26 @@ function App() {
 
   return (
     <>
-      <NavBar 
-        shopName="Jared's Pizza Shop" 
-        cartItemCount={getCartItemCount()}
-        onCartClicked={() => setIsCartOpen(true)}
-      />
-      <div style={{paddingTop: "64px"}}>
-        <Container>
-          <PizzaGrid />
-        </Container>
-      </div>
-      <CartDrawer 
-        open={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-      />
-    </>
+    <NavBar 
+      shopName="Jared's Pizza Shop" 
+      cartItemCount={getCartItemCount()}
+      onCartClicked={() => setIsCartOpen(true)}
+    />
+    <div style={{paddingTop: "64px"}}>
+      <Routes>
+        <Route path="/" element={
+          <Container>
+            <PizzaGrid />
+          </Container>
+        } />
+        <Route path="/order-tracking" element={<OrderTracker orders={[]} />} />
+      </Routes>
+    </div>
+    <CartDrawer 
+      open={isCartOpen}
+      onClose={() => setIsCartOpen(false)}
+    />
+  </>
   );
 }
 

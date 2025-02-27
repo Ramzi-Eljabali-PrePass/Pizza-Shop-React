@@ -9,6 +9,7 @@ import pepperoniImg from '../../../assets/pepperoni.jpg';
 import hawaiianImg from '../../../assets/hawaiian.jpg';
 import cheeseImg from '../../../assets/cheese.jpg';
 import { useCart } from '../cart/CartContext';
+import React from 'react';
 
 
 export interface PizzaOptionProps {
