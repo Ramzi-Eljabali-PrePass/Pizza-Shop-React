@@ -2,7 +2,7 @@ import { AppBar, Toolbar, Typography, IconButton, Badge } from "@mui/material";
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import React from "react";
 
-export default function Navbar({ shopName, cartItemCount, onCartClicked }: 
+export default function NavBar({ shopName, cartItemCount, onCartClicked }: 
   { shopName: string, cartItemCount: number, onCartClicked: () => void }) {
   return (
     <AppBar position="fixed">
