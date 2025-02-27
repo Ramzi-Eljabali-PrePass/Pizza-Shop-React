@@ -1,28 +1,21 @@
 describe('Pizza Shop - Add to Cart', () => {
   beforeEach(() => {
-    // Visit the pizza shop homepage before each test
     cy.visit('/');
   });
 
   it('should add all four pizzas to the cart', () => {
-    // Array of expected pizza names
-    const pizzas = ['Vegetarian', 'Pepperoni', 'Hawaiian', 'Cheese'];
+    const pizzas = ['Vegetarian', 'Pepperoni', 'Cheese', 'Hawaiian'];
 
-    // Check if all pizza names are visible
     pizzas.forEach((pizza) => {
-      cy.contains(pizza).should('be.visible');
+      cy.contains('.MuiTypography-h5', pizza) // Find pizza name in <div class="MuiTypography-h5">
+        .should('be.visible')
+        .parents('.MuiCard-root') // Move up to the entire card container
+        .find('.MuiCardActions-root') // Locate the actions section where the button exists
+        .contains('button', 'Add to Order') // Ensure it finds the button
+        .click();
     });
 
-    // Click "Add to Cart" button for each pizza
-    cy.contains('Vegetarian').closest().contains('button','ADD TO ORDER').click();
-    cy.contains('Pepperoni').closest().contains('ADD TO ORDER').click();
-    cy.contains('Cheese').closest().contains('ADD TO ORDER').click();
-    cy.contains('Hawaiian').closest().contains('ADD TO ORDER').click();
-
-    // Verify that 4 items are in the cart
-   // cy.get('.cart-item').should('have.length', 4); // Adjust the selector if needed
-
-    // Optional: Check if cart total is updated
-    //cy.get('.cart-total').should('not.have.text', '$0.00'); // Change selector if needed
+    // Verify 4 items are added to the cart (update selector if needed)
+    //cy.get('.cart-item').should('have.length', 4);
   });
 });
