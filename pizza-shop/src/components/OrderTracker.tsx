@@ -166,7 +166,7 @@ const OrderTracker: React.FC = () => {
     // Initialize timeouts for all non-ready orders
     orders.forEach(order => {
       if (order.status !== 'ready') {
-        const initialDelay = Math.floor(Math.random() * (15000 - 5000 + 1) + 5000);
+        const initialDelay = 10000;
         timeouts.set(order.id, setTimeout(() => moveOrder(order.id), initialDelay));
       }
     });
@@ -178,7 +178,7 @@ const OrderTracker: React.FC = () => {
   }, [orders.length]);
 
   const getOrdersByStatus = (status: PizzaOrder['status']) => {
-    return orders.filter(order => order.status === status && order.timestamp > new Date(Date.now() - 1000 * 60 * 5));
+    return orders.filter(order => order.status === status);
   };
 
   const renderOrderCard = (order: PizzaOrder) => (
