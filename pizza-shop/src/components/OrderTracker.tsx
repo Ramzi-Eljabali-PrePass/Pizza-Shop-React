@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Card,
@@ -8,8 +8,11 @@ import {
   Paper,
   Typography,
   Stack,
+  CircularProgress,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { collection, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
+import { db } from '../firebase';
 
 interface PizzaOrder {
   id: string;
@@ -17,10 +20,6 @@ interface PizzaOrder {
   items: string[];
   status: 'received' | 'preparing' | 'baking' | 'ready';
   timestamp: Date;
-}
-
-interface OrderTrackerProps {
-  orders: PizzaOrder[];
 }
 
 const StyledColumn = styled(Paper)(({ theme }) => ({
@@ -39,7 +38,47 @@ const OrderList = styled(Box)({
   },
 });
 
-const OrderTracker: React.FC<OrderTrackerProps> = ({ orders }) => {
+const LoadingContainer = styled(Box)({
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  height: '100%',
+});
+
+const OrderTracker: React.FC = () => {
+  const [orders, setOrders] = useState<PizzaOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Create a query to fetch orders sorted by timestamp
+    const ordersQuery = query(
+      collection(db, 'orders'),
+      orderBy('timestamp', 'desc')
+    );
+
+    // Set up real-time listener
+    const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+      const ordersData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          customerName: data.customerName,
+          items: data.items,
+          status: data.status,
+          timestamp: (data.timestamp as Timestamp).toDate(),
+        };
+      });
+      setOrders(ordersData);
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching orders:', error);
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+
   const getOrdersByStatus = (status: PizzaOrder['status']) => {
     return orders.filter(order => order.status === status);
   };
@@ -48,7 +87,7 @@ const OrderTracker: React.FC<OrderTrackerProps> = ({ orders }) => {
     <Card key={order.id} sx={{ '&:hover': { transform: 'translateY(-2px)', transition: 'transform 0.2s' } }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
-          Order #{order.id}
+          Order #{order.id.slice(0, 8)}
         </Typography>
         <Typography variant="body1" color="text.secondary" gutterBottom>
           Customer: {order.customerName}
@@ -76,6 +115,14 @@ const OrderTracker: React.FC<OrderTrackerProps> = ({ orders }) => {
     { title: 'Baking', status: 'baking' },
     { title: 'Ready', status: 'ready' },
   ] as const;
+
+  if (loading) {
+    return (
+      <LoadingContainer>
+        <CircularProgress />
+      </LoadingContainer>
+    );
+  }
 
   return (
     <Box sx={{ p: 2, bgcolor: 'background.default', minHeight: '100vh' }}>

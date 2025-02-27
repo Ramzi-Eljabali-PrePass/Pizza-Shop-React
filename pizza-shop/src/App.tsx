@@ -27,7 +27,7 @@ function App() {
             <PizzaGrid />
           </Container>
         } />
-        <Route path="/order-tracking" element={<OrderTracker orders={[]} />} />
+        <Route path="/order-tracking" element={<OrderTracker />} />
       </Routes>
     </div>
     <CartDrawer 
