@@ -4,6 +4,8 @@ import { useCart } from './CartContext';
 import CartItem from './CartItem';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../../firebase';
 
 interface CartDrawerProps {
   open: boolean;
@@ -11,16 +13,48 @@ interface CartDrawerProps {
 }
 
 const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
-  const { cart, removeFromCart, clearCart } = useCart();
+  const { cart, removeFromCart, clearCart, getTotal } = useCart();
   const navigate = useNavigate();
   const [openDialog, setOpenDialog] = useState(false);
   const [customerName, setCustomerName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const cartItems = Object.values(cart);
 
-  const handleCheckout = () => {
-    onClose(); // Close the drawer
-    clearCart(); // Clear the cart
-    navigate('/order-tracking', { state: { customerName } }); // Pass customer name to order tracking
+  const handleCheckout = async () => {
+    if (!customerName.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      // Create order object
+      const orderData = {
+        customerName: customerName.trim(),
+        items: cartItems.map(item => `${item.pizzaName} (x${item.quantity})`),
+        status: 'received',
+        timestamp: serverTimestamp(),
+        total: getTotal(),
+      };
+
+      // Add order to Firestore
+      const docRef = await addDoc(collection(db, 'orders'), orderData);
+
+      // Close drawer and clear cart
+      onClose();
+      clearCart();
+
+      // Navigate to order tracking with the order ID
+      navigate('/order-tracking', { 
+        state: { 
+          orderId: docRef.id,
+          customerName: customerName.trim() 
+        } 
+      });
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('There was an error processing your order. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+      handleCloseDialog();
+    }
   };
 
   const handleOpenDialog = () => {
@@ -30,13 +64,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setCustomerName('');
-  };
-
-  const handleConfirmCheckout = () => {
-    if (customerName.trim()) {
-      handleCheckout();
-      handleCloseDialog();
-    }
+    setIsSubmitting(false);
   };
 
   return (
@@ -57,24 +85,27 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
           {cartItems.length === 0 ? (
             <Typography>Your cart is empty</Typography>
           ) : (
-            cartItems.map((item) => (
-              <CartItem 
-                key={item.pizzaName} 
-                item={item}
-                onRemove={() => removeFromCart(item.pizzaName)}
-              />
-            ))
-          )}
-          {cartItems.length > 0 && (
-            <Button 
-              variant="contained" 
-              color="primary" 
-              fullWidth 
-              sx={{ mt: 2 }}
-              onClick={handleOpenDialog}
-            >
-              Checkout
-            </Button>
+            <>
+              {cartItems.map((item) => (
+                <CartItem 
+                  key={item.pizzaName} 
+                  item={item}
+                  onRemove={() => removeFromCart(item.pizzaName)}
+                />
+              ))}
+              <Typography variant="h6" sx={{ mt: 2, textAlign: 'right' }}>
+                Total: ${getTotal().toFixed(2)}
+              </Typography>
+              <Button 
+                variant="contained" 
+                color="primary" 
+                fullWidth 
+                sx={{ mt: 2 }}
+                onClick={handleOpenDialog}
+              >
+                Checkout
+              </Button>
+            </>
           )}
         </Box>
       </Drawer>
@@ -89,15 +120,19 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
             fullWidth
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
+            disabled={isSubmitting}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog} disabled={isSubmitting}>
+            Cancel
+          </Button>
           <Button 
-            onClick={handleConfirmCheckout}
-            disabled={!customerName.trim()}
+            onClick={handleCheckout}
+            disabled={!customerName.trim() || isSubmitting}
+            color="primary"
           >
-            Confirm Order
+            {isSubmitting ? 'Processing...' : 'Confirm Order'}
           </Button>
         </DialogActions>
       </Dialog>
