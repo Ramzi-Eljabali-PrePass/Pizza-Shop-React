@@ -13,7 +13,7 @@ import {
   Alert,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { collection, onSnapshot, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, Timestamp, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 import confetti from 'canvas-confetti';
 
@@ -77,7 +77,7 @@ const OrderTracker: React.FC = () => {
           id: doc.id,
           customerName: data.customerName,
           items: data.items,
-          status: data.status,
+          status: data.status as PizzaOrder['status'],
           timestamp: (data.timestamp as Timestamp).toDate(),
         };
       });
@@ -121,38 +121,46 @@ const OrderTracker: React.FC = () => {
       );
     };
 
-    const moveOrder = (orderId: string) => {
-      setOrders(currentOrders => {
-        return currentOrders.map(order => {
-          if (order.id !== orderId) return order;
+    const moveOrder = async (orderId: string) => {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
 
-          let newStatus = order.status;
-          switch (order.status) {
-            case 'received':
-              newStatus = 'preparing';
-              break;
-            case 'preparing':
-              newStatus = 'baking';
-              break;
-            case 'baking':
-              newStatus = 'ready';
-              break;
-          }
+      let newStatus = order.status;
+      switch (order.status) {
+        case 'received':
+          newStatus = 'preparing';
+          break;
+        case 'preparing':
+          newStatus = 'baking';
+          break;
+        case 'baking':
+          newStatus = 'ready';
+          break;
+      }
 
-          // If the new status is ready, set up removal timeout
-          if (newStatus === 'ready') {
-            timeouts.set(
-              `remove_${orderId}`,
-              setTimeout(() => removeReadyOrder(orderId, order.customerName), 10000)
-            );
-          } else if (newStatus !== 'ready') {
-            const nextDelay = Math.floor(Math.random() * (15000 - 5000 + 1) + 5000);
-            timeouts.set(orderId, setTimeout(() => moveOrder(orderId), nextDelay));
-          }
-
-          return { ...order, status: newStatus };
-        });
+      // Update Firestore first
+      const orderRef = doc(db, 'orders', orderId);
+      await updateDoc(orderRef, {
+        status: newStatus
       });
+
+      // Then update local state
+      setOrders(currentOrders => 
+        currentOrders.map(o => 
+          o.id === orderId ? { ...o, status: newStatus } : o
+        )
+      );
+
+      // Handle timeouts
+      if (newStatus === 'ready') {
+        timeouts.set(
+          `remove_${orderId}`,
+          setTimeout(() => removeReadyOrder(orderId, order.customerName), 10000)
+        );
+      } else {
+        const nextDelay = Math.floor(Math.random() * (15000 - 5000 + 1) + 5000);
+        timeouts.set(orderId, setTimeout(() => moveOrder(orderId), nextDelay));
+      }
     };
 
     // Initialize timeouts for all non-ready orders
